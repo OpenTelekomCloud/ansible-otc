@@ -1,0 +1,233 @@
+---
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  vars_files:
+    - vars/buildservice_var.yml
+  vars:
+    date: "{{ lookup('pipe', 'date +%Y%m%d') }}"
+  tasks:
+  - name: Download ubuntu image {{ distro }}
+    get_url:
+      url: "https://cloud-images.ubuntu.com/{{ distro}}/current/{{ distro }}-server-cloudimg-amd64-disk1.img"
+      dest: "./{{ distro }}-server-cloudimg-amd64-{{ date }}.vmdk"
+      force: yes
+
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  vars:
+    date: "{{ lookup('pipe', 'date +%Y%m%d') }}"
+    object: "{{ distro }}-server-cloudimg-amd64-{{ date }}.vmdk"
+  vars_files:
+    - vars/buildservice_var.yml
+  roles:
+    - role: otc_obs
+      localaction: "create"
+    - role: otc_obs
+      localaction: "upload"
+
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  vars:
+    date: "{{ lookup('pipe', 'date +%Y%m%d') }}"
+    bucket: "buildservice99"
+    image_name: "{{ distro }}-server-cloudimg-amd64-{{ date }}"
+    image_url: "{{ bucket }}:{{ distro }}-server-cloudimg-amd64-{{ date }}.vmdk"
+    image_min_disk: 12
+  roles:
+    - role: otc_auth
+    - role: otc_ims
+      localaction: "create"
+
+  tasks:
+    - name: Check image status
+      uri:
+        url: "{{ AUTH_URL_IMS }}/v2/cloudimages?name={{ image_name }}"
+        method: GET
+        return_content: yes
+        validate_certs: yes
+        headers:
+          Content-Type: "application/json"
+          X-Auth-Token: "{{ token['x_subject_token'] }}"
+      when: image_name is defined
+      register: ims_result
+      until: (ims_result.content|from_json)|json_query('images[].status|[0]') == 'active'
+      retries: 50
+      delay: 10
+
+- name: Create VPC
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/buildservice_var.yml
+  roles:
+    - role: otc_auth
+    - role: otc_vpc
+      localaction: "create"
+
+- name: Create Subnet
+  hosts: localhost
+  gather_facts: no
+  connection: local
+  vars_files:
+    - vars/buildservice_var.yml
+  roles:
+    - role: otc_auth
+    - role: otc_subnet
+      localaction: "create"
+
+- name: Create Secgroup
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/buildservice_var.yml
+  vars:
+    secgrouprules: "{{ securitygroups[secgroup_name] }}"
+  roles:
+    - role: otc_auth
+    - role: otc_secgroup
+      localaction: "create"
+
+- name: Create Keypair
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/buildservice_var.yml
+  roles:
+    - role: otc_auth
+    - role: otc_keypair
+      localaction: "create"
+
+- name: Create EIP
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/buildservice_var.yml
+  roles:
+    - role: otc_auth
+    - role: otc_eip
+      localaction: "create"
+
+- name: Create ECS
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/buildservice_var.yml
+  vars:
+    date: "{{ lookup('pipe', 'date +%Y%m%d') }}"
+    image_name: "{{ distro }}-server-cloudimg-amd64-{{ date }}"
+  roles:
+    - role: otc_auth
+    - role: otc_ecs
+      localaction: "create"
+
+- name: Switch to ECS
+  hosts: localhost
+  gather_facts: no
+  vars_files:
+    - vars/buildservice_var.yml
+  tasks:
+  - name: Wait for ssh
+    local_action: wait_for
+    args:
+      port: 22
+      host: "{{ public_ip_address }}"
+      delay: 60
+
+  - name: Install python2 first
+    raw: apt-get -y install python-simplejson
+    remote_user: ubuntu
+    become: true
+    become_method: sudo
+    become_user: root
+    delegate_to: "{{ public_ip_address }}"
+
+  - name: Doing things on ECS
+    shell: apt-get update; apt-get -y install git puppet; rm -rf modules; mkdir modules; git clone -b 1.1.2 https://github.com/dev-sec/puppet-os-hardening.git modules/os_hardening; git clone https://github.com/thias/puppet-sysctl.git modules/sysctl; git clone https://github.com/puppetlabs/puppetlabs-stdlib.git modules/stdlib; puppet apply --modulepath ./modules -e "include os_hardening"
+    remote_user: ubuntu
+    become: true
+    become_method: sudo
+    become_user: root
+    delegate_to: "{{ public_ip_address }}"
+
+  - name: Stop ECS
+    shell: /sbin/shutdown -H +1 &
+    remote_user: ubuntu
+    become: true
+    become_user: root
+    become_method: sudo
+    ignore_errors: yes
+    delegate_to: "{{ public_ip_address }}"
+
+- name: Check ECS Status
+  hosts: localhost
+  gather_facts: no
+  vars:
+    ecs_name: "buildserver"
+    ecs_body: "{\"server\": { \"name\": \"{{ ecs_name }}\" }}"
+  roles:
+    - role: otc_auth
+    - role: otc_ecs
+      localaction: "lookup"
+  tasks:
+  - name: Check API if ECS is stopped
+    uri:
+      url: "{{ AUTH_URL_ECS }}/servers/{{ ecs_id }}"
+      method: PUT
+      body_format: raw
+      follow_redirects: all
+      return_content: yes
+      validate_certs: yes
+      headers:
+        Content-Type: "application/json"
+        X-Auth-Token: "{{ token['x_subject_token'] }}"
+      body: "{{ ecs_body|to_json }}"
+    register: ecs_status
+    until: (ecs_status.content|from_json)|json_query('server.status') != 'ACTIVE'
+    retries: 50
+    delay: 10
+
+- name: Create new image
+  hosts: localhost
+  gather_facts: no
+  vars:
+    ecs_name: "buildserver"
+    date: "{{ lookup('pipe', 'date +%Y%m%d') }}"
+    image_name: "buildservice-{{ distro }}-{{ date }}"
+    image_job_id: "{{ (image_create.content|from_json)|json_query('job_id') }}"
+  vars_files:
+    - vars/buildservice_var.yml
+  roles:
+    - role: otc_auth
+    - role: otc_ims
+      localaction: "create"
+  tasks:
+  - name: Request job status from  API
+    uri:
+      url: "{{ AUTH_URL_ECS_CLOUD }}/{{ PROJECT_ID }}/jobs/{{ image_job_id }}"
+      method: GET
+      return_content: yes
+      validate_certs: yes
+      headers:
+        Content-Type: "application/json"
+        X-Auth-Token: "{{ token['x_subject_token'] }}"
+    when: image_job_id is defined
+    register: jobstatus
+    until: (jobstatus.content|from_json)|json_query('status') == 'SUCCESS'
+    retries: 50
+    delay: 10
+
+- name: Delete ECS
+  hosts: localhost
+  gather_facts: no
+  vars:
+    ecs_name: "buildserver"
+    delete_volume: true
+  vars_files:
+    - vars/buildservice_var.yml
+  roles:
+    - role: otc_auth
+    - role: otc_ecs
+      localaction: "delete"

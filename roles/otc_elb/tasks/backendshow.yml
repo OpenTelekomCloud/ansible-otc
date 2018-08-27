@@ -1,0 +1,22 @@
+- name: Lookup elb_id
+  include: lookup.yml
+
+- name: Send request to API (show ELB backend members)
+  uri:
+    url: "{{ AUTH_URL_ELB }}/{{ PROJECT_ID }}/elbaas/listeners/{{ listener_id}}/members"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: backendmembers
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: backendmembers.status == 200
+  changed_when: false
+  when: listener_id is defined
+
+- debug:
+    msg: "{{ backendmembers }}"

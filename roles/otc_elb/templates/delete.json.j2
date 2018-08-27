@@ -1,0 +1,17 @@
+{
+    "servers": [
+      {
+        "id": "{{ ecs_id }}"
+      }
+    ],
+{% if delete_publicip is defined %}  
+    "delete_publicip": true, 
+{% else %}  
+    "delete_publicip": false, 
+{% endif %}  
+{% if delete_volume is defined %}  
+    "delete_volume": true
+{% else %}  
+    "delete_volume": false
+{% endif %}  
+}

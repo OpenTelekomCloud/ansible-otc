@@ -1,0 +1,14 @@
+{
+    "name": "{{ elb_name }}",
+    "vpc_id": "{{ vpc_id }}",
+{% if elb_type == "External" %}  
+    "bandwidth": "{{ elb_bandwidth }}",
+{% endif %}  
+    "type": "{{ elb_type }}",
+{% if elb_type == "Internal" and secgroup_id is defined %}  
+    "security_group_id": "{{ secgroup_id }}",
+    "az": "{{ availability_zone_id }}",
+    "vip_subnet_id": "{{ subnet_id }}",
+{% endif %}  
+    "admin_state_up": {{ admin_state_up }}
+}

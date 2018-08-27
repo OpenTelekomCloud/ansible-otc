@@ -1,0 +1,22 @@
+- name: Send request to API (list eip for lookup)
+  uri:
+    url: "{{ AUTH_URL_VPC }}/v1/{{ PROJECT_ID }}/publicips"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: floatingiplist_result
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: floatingiplist_result.status == 200
+  changed_when: false
+
+- name: Set fact eip_id for eip if public_ip_address is defined
+  set_fact:
+    eip_id: "{{ (floatingiplist_result.content|from_json)|json_query(\"publicips[?public_ip_address=='\" + public_ip_address + \"'].id|[0]\") }}"
+  when:
+    - public_ip_address | ipaddr
+#    - (public_ip_address is defined and public_ip_address | ipaddr)

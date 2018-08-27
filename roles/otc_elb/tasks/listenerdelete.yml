@@ -1,0 +1,19 @@
+- name: Send request to API
+  uri:
+    url: "{{ AUTH_URL_ELB }}/{{ PROJECT_ID }}/elbaas/listeners/{{ listener_id}}"
+    method: DELETE
+    return_content: yes
+    status_code: 200,201,202,203,204
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: elblistener
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: elblistener.status == 200 or elblistener.status == 201 or elblistener.status == 203 or elblistener.status == 204
+  changed_when: false
+
+- debug:
+    msg: "{{ elblistener }}"

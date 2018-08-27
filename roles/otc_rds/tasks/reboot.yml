@@ -1,0 +1,28 @@
+- name: Lookup rds_id
+  include: lookup.yml
+
+- name: Send request to API (reboot RDS)
+  uri:
+    url: "{{ AUTH_URL_RDS }}/{{ OS_USER_DOMAIN_ID }}/instances/{{ rds_id }}/action"
+    method: POST
+    body_format: raw
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    status_code: 200,201,202,203
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+      X-Language: "en-us"
+    body: "{ \"restart\": {}}"
+  register: rds
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: rds.status == 200 or rds.status == 201 or rds.status == 202 or rds.status == 203
+  changed_when: false
+  when:
+    - rds_id is defined
+
+- name: Output of rds
+  debug:
+    msg: "{{ rds }}"

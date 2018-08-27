@@ -1,4 +1,12 @@
 _secrets.yml
-_elb_secrets.yml
-_ecs_secrets.yml
+_user_data*.txt
+tenant.ini.*
 *.retry
+.eggs/
+.tox/
+ansible_otc.egg-info/
+doc/build/
+playbooks/test.*
+playbooks/roles.yml
+AUTHORS
+ChangeLog

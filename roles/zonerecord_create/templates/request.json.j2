@@ -1,9 +1,0 @@
-{
-    "name": "{{ zonerecord_name }}",
-{% if zonerecord_description is defined %}  
-    "description": "{{ zonerecord_description }}",
-{% endif %}  
-    "type": "{{ zonerecord_type }}",
-    "ttl": {{ zonerecord_ttl }},
-    "records": [ "{{ zonerecord_value }}" ]
-}

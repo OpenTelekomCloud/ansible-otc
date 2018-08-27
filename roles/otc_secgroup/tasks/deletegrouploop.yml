@@ -1,0 +1,45 @@
+- name: Send request to API (list security groups)
+  uri:
+    url: "{{ AUTH_URL_VPC }}/v1/{{ PROJECT_ID }}/security-groups"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  when:
+    - secgroup_name is defined
+  register: secgroup_result
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: secgroup_result.status == 200
+  changed_when: false
+
+- name: Set fact for secgroup_id if secgroup_name is defined
+  set_fact:
+    secgroup_id: "{{ (secgroup_result.content|from_json)|json_query(\"security_groups[?name=='\" + secgroup_name + \"'].id|[0]\") }}"
+  when:
+    - secgroup_name is defined and secgroup_name| length != 0
+
+- name: Send request to API (delete security group)
+  uri:
+    url: "{{ AUTH_URL_VPC }}/v2.0/security-groups/{{ secgroup_id }}"
+    method: DELETE
+    body_format: raw
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    status_code: 200,201,202,203,204
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: secgroup
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: secgroup.status == 200 or secgroup.status == 201 or secgroup.status == 202 or secgroup.status == 203 or secgroup.status == 204
+  changed_when: false
+  when: (secgroup_id is defined and secgroup_id| length != 0)
+
+- debug:
+    msg: "{{ secgroup }}"

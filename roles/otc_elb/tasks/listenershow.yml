@@ -1,0 +1,22 @@
+- name: Lookup elb_id
+  include: lookup.yml
+
+- name: Send request to API
+  uri:
+    url: "{{ AUTH_URL_ELB }}/{{ PROJECT_ID }}/elbaas/listeners?loadbalancer_id={{ elb_id}}"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: elblistener
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: elblistener.status == 200
+  changed_when: false
+  when: elb_id is defined
+
+- debug:
+    msg: "{{ elblistener }}"

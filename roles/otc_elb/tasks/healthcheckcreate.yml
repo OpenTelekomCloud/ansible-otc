@@ -1,0 +1,28 @@
+- name: Get listener_id
+  include: lookup.yml
+  when:
+    - listener_name is defined
+
+- name: Send request to API (Create ELB Healthcheck)
+  uri:
+    url: "{{ AUTH_URL_ELB }}/{{ PROJECT_ID }}/elbaas/healthcheck"
+    method: POST
+    body_format: raw
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+    body: "{{ lookup('template', 'healthcheckcreate.json.j2')|to_json }}"
+  register: elbhealthcheck
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: elbhealthcheck.status == 200
+  changed_when: false
+  when:
+    - listener_id is defined and listener_id|length != 0
+    - not healthcheck_id or healthcheck_id is undefined
+
+- debug:
+    msg: "{{ elbhealthcheck }}"

@@ -1,8 +1,0 @@
-subnet_name: "ansible-subnet01"
-subnet_net: "192.168.5.0/24"
-subnet_gateway: "192.168.5.1"
-subnet_dhcp_enable: true
-subnet_primary_dns: "8.8.8.8"
-subnet_secondary_dns: "8.4.4.8"
-subnet_availability_zone: "eu-de-02"
-subnet_vpc_id: "0db2af4b-115d-426a-acae-889b025110c8"

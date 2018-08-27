@@ -1,0 +1,4 @@
+uri_follow_redirects: "none"
+uri_validate_certs: "yes"
+uri_retries: 5
+uri_delay: 1

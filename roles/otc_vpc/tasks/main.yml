@@ -1,0 +1,8 @@
+- name: action {{ localaction }}
+  include: "{{ localaction }}.yml"
+  when: localaction is defined
+
+- name: Get vpc_id
+  include: lookup.yml
+  when:
+    - vpc_name is defined

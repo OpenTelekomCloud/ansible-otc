@@ -1,0 +1,24 @@
+- name: Lookup subnet_id
+  include: lookup.yml
+
+- name: Send request to API (delete subnet)
+  uri:
+    url: "{{ AUTH_URL_VPC }}/v1/{{ PROJECT_ID }}/vpcs/{{ vpc_id }}/subnets/{{ subnet_id }}"
+    method: DELETE
+    body_format: raw
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    status_code: 200,201,202,203,204
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: subnet
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: subnet.status == 200 or subnet.status == 201 or subnet.status == 202 or subnet.status == 203 or subnet.status == 204
+  changed_when: false
+  when: subnet_id is defined and subnet_id|length != 0
+
+- debug:
+    msg: "{{ subnet }}"

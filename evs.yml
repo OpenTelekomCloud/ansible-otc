@@ -1,7 +1,0 @@
----
-- hosts: all
-  roles:
-  - role: token
-  - role: evs
-
-

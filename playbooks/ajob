@@ -1,0 +1,5 @@
+#!/bin/sh
+# show otc job status
+
+ansible-playbook -e "job_id=$1" job.yml
+

@@ -1,0 +1,15 @@
+{
+{% if image_url is defined %}  
+    "image_url": "{{ image_url }}",
+{% endif %}  
+{% if ecs_id is defined %}  
+    "instance_id": "{{ ecs_id }}",
+{% endif %}  
+{% if image_min_disk is defined %}  
+    "min_disk": {{ image_min_disk }},
+{% endif %}  
+{% if image_os_version is defined %}  
+    "__os_version":"{{ image_os_version }}",
+{% endif %}  
+    "name": "{{ image_name }}"
+}

@@ -1,0 +1,10 @@
+- name: action {{ localaction }}
+  include: "{{ localaction }}.yml"
+  when: localaction is defined
+
+- name: Keypair lookup
+  include: lookup.yml
+#  when:
+#    - localaction is defined and localaction == "lookup"
+  tags:
+    - keypairlookup

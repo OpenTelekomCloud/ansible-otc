@@ -1,0 +1,22 @@
+- name: Send request to API (create image)
+  uri:
+    url: "{{ AUTH_URL_IMS }}/v2/cloudimages/action"
+    method: POST
+    body_format: raw
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+    body: "{{ lookup('template', 'create.json.j2')|to_json }}"
+  register: image_create
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: image_create.status == 200
+  changed_when: false
+  when: image_name is defined
+
+- debug:
+    msg: "{{ image_create }}"
+  when: image_create is defined

@@ -1,0 +1,28 @@
+- name: Get listener_id
+  include: lookup.yml
+  when:
+    - listener_name is defined
+
+- name: Send request to API (create elb_listener)
+  uri:
+    url: "{{ AUTH_URL_ELB }}/{{ PROJECT_ID }}/elbaas/listeners"
+    method: POST
+    body_format: raw
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+    body: "{{ lookup('template', 'listenercreate.json.j2')|to_json }}"
+  register: elblistner
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: elblistener.status == 200
+  when:
+    - elb_id is defined
+    - listener_name is defined
+    - not listener_id or listener_id is undefined
+
+- debug:
+    msg: "{{ elblistner }}"

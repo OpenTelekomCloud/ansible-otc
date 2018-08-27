@@ -1,0 +1,25 @@
+- name: Lookup vpc_id
+  include: lookup.yml
+
+- name: Send request to API (delete VPC)
+  uri:
+    url: "{{ AUTH_URL_VPC }}/v1/{{ PROJECT_ID }}/vpcs/{{ vpc_id}}"
+    method: DELETE
+    body_format: raw
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    status_code: 200,201,202,203,204
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: vpc
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: vpc.status == 200 or vpc.status == 200 or vpc.status == 202 or vpc.status == 203 or vpc.status == 204
+  changed_when: false
+  when: vpc_id is defined and vpc_id|length != 0
+
+- debug:
+    msg: "{{ vpc }}"
+  when: vpc_id is defined

@@ -1,0 +1,45 @@
+---
+- hosts: localhost
+  gather_facts: no
+
+  vars_prompt:
+  - name: occ_profile_name
+    prompt: |
+      Name of the profile in os-client-config (default: otc)
+    default: otc
+    private: no
+  - name: occ_auth_url
+    prompt: |
+      Name of the auth_url in os-client-config (default: https://iam.eu-de.otc.t-systems.com:443/v3)
+    default: https://iam.eu-de.otc.t-systems.com:443/v3
+    private: no
+  - name: occ_project_name
+    prompt: |
+      Name of the project_name in os-client-config (default: eu-de)
+    default: eu-de
+    private: no
+  - name: occ_region_name
+    prompt: |
+      Name of the region in os-client-config (default: eu-de)
+    default: eu-de
+  - name: occ_project_domain_name
+    prompt: |
+      Name of the project_domain_name in os-client-config (default: Default)
+    default: Default
+    private: no
+  - name: occ_user_domain_name
+    prompt: |
+      Name of the user_domain_name in os-client-config (default: OTC-EU-DE-00000000000000000000)
+    default: OTC-EU-DE-00000000000000000000
+    private: no
+  - name: occ_username
+    prompt: |
+      Username in os-client-config
+    private: no
+  - name: occ_password
+    prompt: |
+      Password in os-client-config
+    private: no
+
+  roles:
+  - role: os-client-config

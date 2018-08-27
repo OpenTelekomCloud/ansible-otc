@@ -1,0 +1,75 @@
+{
+  "default": {
+    "image_name" : "Community_Ubuntu_16.04_TSI_latest",
+    "availability_zone" : "eu-de-01",
+    "evs_availability_zone" : "eu-de-01",
+    "vpc_name" : "travis-vpc01",
+    "vpc_net" : "192.168.0.0/16",
+    "subnet_name" : "travis-subnet01",
+    "subnet_net" : "192.168.0.0/24",
+    "subnet_gateway" : "192.168.0.1",
+    "subnet_dhcp_enable" : "true",
+    "subnet_primary_dns" : "8.8.8.8",
+    "subnet_secondary_dns" : "8.4.4.8",
+    "secgroups" : "travis-secgroup01",
+    "ecs_volumetype" : "SATA",
+    "ecs_ram" : "2048",
+    "ecs_vcpus" : "2",
+    "ecs_adminkey" : "travis-key",
+    "keypair_file" : "~/.ssh/id_rsa.pub",
+    "evs_scsi": false,
+    "evs_multiattach": false
+    },
+  "volumes": {
+    "travis-evs01" : {
+      "evs_volume_type": "SATA",
+      "evs_size": 20
+    }
+  },
+  "vms": {
+    "travis-test01" : {
+      "vpc_name" : "travis-vpc01",
+      "availability_zone" : "eu-de-01",
+      "subnet_name" : "travis-subnet01",
+      "secgroups" : [ "default-travis", "travis-test01" ],
+      "ecs_ipaddress" : "192.168.0.101",
+      "ecs_publicip" : "80.158.17.98",
+      "ecs_publicfqdn" : "travis-test01.travis.otc.telekomcloud99.com",
+      "ecs_publicttl" : "300",
+      "eip_bandwidth_name" : "travis-eip01",
+      "eip_bandwidth_size" : "500"
+    },
+    "travis-test02" : {
+      "image_name" : "Community_Ubuntu_14.04_TSI_latest",
+      "vpc_name" : "travis-vpc01",
+      "availability_zone" : "eu-de-02",
+      "ecs_volumetype" : "SATA",
+      "ecs_ram" : "1024",
+      "ecs_vcpus" : "1",
+      "ecs_ipaddress" : "192.168.0.102"
+    }
+  },
+  "securitygroups" : {
+    "default-travis" : [ "ingress;IPv4;tcp;22;22;0.0.0.0", "ingress;IPv4;tcp;80;80;0.0.0.0" ],
+    "travis-test01" : [ "ingress;IPv4;tcp;22022;22022;0.0.0.0" ]
+  },
+  "dnszones": {
+    "travis.internal.corp": {
+      "zone_description": "Core Zone internal services",
+      "zone_type": "private",
+      "zone_email": "nobody@example.com",
+      "zone_ttl": "86400"
+     },
+    "travis.otc.telekomcloud99.com": {
+      "zone_description": "Core Zone public OTC services",
+      "zone_type": "public",
+      "zone_email": "nobody@example.com",
+      "zone_ttl": 3600
+    }
+  },
+  "dnszonerecords" : {
+    "travis.internal.corp": [ "travis-test01.travis.internal.corp;description;A;300;192.168.0.101",
+                               "travis-test02.travis.internal.corp;description;A;300;192.168.0.102" ],
+    "travis.otc.telekomcloud99.com": [ "travis-test01.travis.otc.telekomcloud99.com;;A;300;80.158.17.98" ]
+  }
+}

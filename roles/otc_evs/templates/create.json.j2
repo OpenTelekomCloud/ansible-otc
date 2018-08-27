@@ -1,0 +1,25 @@
+{
+    "volume": {
+        "availability_zone": "{{ evs_availability_zone }}",
+        "name": "{{ evs_name }}",
+        "volume_type": "{{ evs_volume_type }}",
+{% if evs_size is defined %}  
+        "size": {{ evs_size }},
+{% endif %}  
+{% if evs_ims_id is defined %}  
+        "imageRef": "{{ evs_ims_id }}",
+{% endif %}  
+{% if evs_backup_id is defined %}  
+        "backup_id": "{{ evs_backup_id }}",
+{% endif %}  
+{% if evs_scsi is defined and evs_scsi == "true" %}  
+        "metadata": {
+            "hw:passthrough": {{ evs_scsi }}
+        },
+{% endif %}  
+{% if evs_multiattach is defined and evs_multiattach == "true" %}  
+        "multiattach": {{ evs_multiattach }},
+{% endif %}  
+        "count": 1
+   }
+}

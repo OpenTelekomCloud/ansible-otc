@@ -1,0 +1,10 @@
+uri_follow_redirects: "none"
+uri_validate_certs: "yes"
+uri_retries: 5
+uri_delay: 1
+cts_tracker_name: "system"
+cts_trace_name: "login"
+cts_trace_param: "time,user.name,source_ip"
+cts_limit: 200
+cts_from: "2018-06-15 00:00:00"
+cts_to: "2018-06-27 00:00:00"

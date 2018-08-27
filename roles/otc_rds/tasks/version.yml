@@ -1,0 +1,59 @@
+- name: Request rds list from API for mysql
+  uri:
+    url: "{{ AUTH_URL_RDS }}/{{ OS_USER_DOMAIN_ID }}/datastores/MySQL/versions"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+      X-Language: "en-us"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: rds_mysql_versions
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: rds_mysql_versions.status == 200
+  changed_when: false
+
+- name: Request rds list from API for postgresql
+  uri:
+    url: "{{ AUTH_URL_RDS }}/{{ OS_USER_DOMAIN_ID }}/datastores/PostgreSQL/versions"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+      X-Language: "en-us"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: rds_postgresql_versions
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: rds_postgresql_versions.status == 200
+  changed_when: false
+
+- name: Set fact rds_version_id (MySQL)
+  set_fact:
+    rds_version_id: "{{ (rds_mysql_versions.content|from_json)|json_query(\"dataStores[?name=='\" + rds_version + \"'].id|[0]\") }}"
+  when:
+    - (rds_name is defined or localaction == "flavor")
+    - rds_type == "MySQL"
+
+- name: Set fact rds_version_id (PostgreSQL)
+  set_fact:
+    rds_version_id: "{{ (rds_postgresql_versions.content|from_json)|json_query(\"dataStores[?name=='\" + rds_version + \"'].id|[0]\") }}"
+  when:
+    - (rds_name is defined or localaction == "flavor")
+    - rds_type == "PostgreSQL"
+
+- debug:
+    msg: "{{ rds_mysql_versions.json }}"
+  when:
+    - rds_name is not defined
+
+- debug:
+    msg: "{{ rds_postgresql_versions.json }}"
+  when:
+    - rds_name is not defined

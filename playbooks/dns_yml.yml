@@ -1,0 +1,22 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars_files:
+   - "vars/dns.yml"
+  vars:
+    # DNS
+    zone_description: "{{ dnszones[zone_name].zone_description | default(default.zone_description) }}"
+    zone_type: "{{ dnszones[zone_name].zone_type | default(default.zone_type) }}"
+    zone_email: "{{ dnszones[zone_name].zone_email | default(default.zone_email) }}"
+    zone_ttl: "{{ dnszones[zone_name].zone_ttl | default(default.zone_ttl) }}"
+    zone_records: "{{ dnszonerecords[zone_name] }}"
+
+  roles:
+    - role: "otc_auth"
+    - role: "otc_dns"
+      localaction: "create"
+    # create internal DNS zone
+    # - role: "otc_vpc"
+    #   localaction: "router"
+    # - role: "otc_dns"
+    #   localaction: "create"

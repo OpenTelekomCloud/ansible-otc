@@ -1,0 +1,22 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    tenant_ini: "vars/dns.ini"
+    # DNS
+    zone_description: "{{ lookup('ini','zone_description section={{ zone_name }} file={{ tenant_ini }}') | default(lookup('ini', 'zone_ttl section=DEFAULT file={{ tenant_ini }}') ) }}"
+    zone_type: "{{ lookup('ini','zone_type section={{ zone_name }} file={{ tenant_ini }}') | default(lookup('ini', 'zone_type section=DEFAULT file={{ tenant_ini }}') ) }}"
+    zone_email: "{{ lookup('ini','zone_email section={{ zone_name }} file={{ tenant_ini }}') | default(lookup('ini', 'zone_email section=DEFAULT file={{ tenant_ini }}') ) }}"
+    zone_ttl: "{{ lookup('ini','zone_ttl section={{ zone_name }} file={{ tenant_ini }}') | default(lookup('ini', 'zone_ttl section=DEFAULT file={{ tenant_ini }}') ) }}"
+    zone_records: "{{ lookup('ini','{{ zone_name }} section=dnszonerecords file={{ tenant_ini }}') }}"
+
+  roles:
+    # create VM
+    - role: "otc_auth"
+    - role: "otc_dns"
+      localaction: "create"
+    # create internal DNS zone
+    # - role: "otc_vpc"
+    #   localaction: "router"
+    # - role: "otc_dns"
+    #   localaction: "create"

@@ -1,0 +1,56 @@
+- name: Lookup flavor_id
+  include: lookup.yml
+
+- name: Lookup vpc_id
+  include: ../../otc_vpc/tasks/lookup.yml
+
+- name: Lookup image_id
+  include: ../../otc_ims/tasks/lookup.yml
+
+- name: Lookup subnet_id
+  include: ../../otc_subnet/tasks/lookup.yml
+
+- name: Lookup eip_id
+  include: ../../otc_eip/tasks/lookup.yml
+
+- name: Lookup secgroup_id
+  include: ../../otc_secgroup/tasks/lookup.yml
+  with_items:
+    - "{{ secgroups }}"
+  loop_control:
+    loop_var: secgroup_name
+
+- name: Send request to API (create ECS)
+  uri:
+    url: "{{ AUTH_URL_ECS_CLOUD }}/{{ PROJECT_ID }}/cloudservers"
+    method: POST
+    body_format: raw
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+    body: "{{ lookup('template', 'create.json.j2')|to_json }}"
+  register: ecs
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: ecs.status == 200
+  changed_when: false
+  when:
+    - ecs_name is defined
+    - image_id is defined
+    - flavor_id is defined
+    - not ecs_id or ecs_id is undefined
+
+- name: Set fact job_id
+  set_fact:
+    job_id: "{{ (ecs.content|from_json)|json_query('job_id') }}"
+  when:
+    - not ecs_id or ecs_id is undefined
+    - ecs is defined and ecs.content|length != 0
+
+- name: Output of job_id
+  debug:
+    msg: "{{ job_id }}"
+  when: job_id is defined

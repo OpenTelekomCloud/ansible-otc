@@ -1,0 +1,23 @@
+- name: Send request to API (list images for lookup)
+  uri:
+    url: "{{ AUTH_URL_IMS }}/v2/cloudimages?name={{ image_name }}"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: ims_result
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: ims_result.status == 200
+  changed_when: false
+  when:
+    - image_name is defined
+
+- name: Set fact image_id if image_name is defined
+  set_fact:
+    image_id: "{{ (ims_result.content|from_json)|json_query('images[].id|[0]') }}"
+  when:
+    - image_name is defined

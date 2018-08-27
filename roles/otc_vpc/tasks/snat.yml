@@ -1,0 +1,49 @@
+- name: Lookup vpc_id
+  include: lookup.yml
+
+- name: Send request to API (list router for SNAT)
+  uri:
+    url: "{{ AUTH_URL_VPC }}/v2.0/routers/{{ vpc_id }}"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: routerlist
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: routerlist.status == 200
+  changed_when: false
+  when:
+    - vpc_id is defined
+
+- set_fact:
+    external_network_id: "{{ (routerlist.content|from_json)|json_query('router.external_gateway_info.network_id') }}"
+  when: routerlist is defined
+
+- name: Send request to API (set SNAT)
+  uri:
+    url: "{{ AUTH_URL_VPC }}/v2.0/routers/{{ vpc_id }}"
+    method: PUT
+    body_format: raw
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+    body: "{{ lookup('template', 'snat.json.j2')|to_json }}"
+  register: router
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: router.status == 200
+  changed_when: false
+  when:
+    - vpc_id is defined
+    - enable_snat is defined
+    - external_network_id|length != 0
+
+- debug:
+    msg: "{{ router }}"

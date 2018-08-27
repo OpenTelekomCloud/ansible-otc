@@ -1,0 +1,68 @@
+- name: Request full ecs list from API
+  uri:
+    url: "{{ AUTH_URL_ECS }}/servers"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: ecs_result
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: ecs_result.status == 200
+  changed_when: false
+  when: listener_name is defined
+
+- name: Request detail ecs info from API
+  vars:
+    backend_member_name: "{{ ecs_result['json']|json_query(\"servers[?name=='\" + item + \"'].id|[0]\") }}"
+  uri:
+    url: "{{ AUTH_URL_ECS }}/servers/{{ backend_member_name }}"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: ecs
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: ecs.status == 200
+  changed_when: false
+  when: backend_members is defined
+  with_items:
+    - "{{ backend_members.split(',') }}"
+
+- name: Set fact backend_member_id
+  set_fact:
+    backend_member_id: "{{ ecs['results']|json_query('[].json.server.id') }}"
+    backend_member_ip: "{{ ecs['results']|json_query('[].json.server.addresses.*[*].addr[][]') }}"
+  when: ecs is defined and listener_id is defined
+
+- name: Send request to API
+  uri:
+    url: "{{ AUTH_URL_ELB }}/{{ PROJECT_ID }}/elbaas/listeners/{{ listener_id }}/members"
+    method: POST
+    body_format: raw
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+    body: "{{ lookup('template', 'backendcreate.json.j2')|to_json }}"
+  register: elbbackends
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: elbbackends.status == 200
+  changed_when: false
+  with_together:
+    - "{{ backend_member_id }}"
+    - "{{ backend_member_ip }}"
+
+- debug:
+    msg: "{{ elbbackends }}"
+  when: elbbackends is defined

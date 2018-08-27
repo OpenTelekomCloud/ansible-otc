@@ -1,0 +1,41 @@
+- name: Load auth variable file from os-client config or ansible-vault secret
+  include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+        - "vars/env.yml"
+        - "vars/_secrets.yml"
+      skip: true
+  tags:
+    - always
+
+- name: Check if os-client config exists
+  vars:
+    user_home: "{{ lookup('env','HOME') }}"
+  stat:
+    path: "{{ user_home }}/.config/openstack/clouds.yml"
+  register: osclientconfigfile
+  tags:
+    - always
+
+- name: Get token with env variables
+  include: token.yml
+  vars:
+    USERNAME: "{{ lookup('env','OS_USERNAME') }}"
+    PASSWORD: "{{ lookup('env','OS_PASSWORD') }}"
+    PROJECT_NAME: "{{ lookup('env','OS_PROJECT_NAME') }}"
+    DOMAIN: "{{ lookup('env','OS_USER_DOMAIN_NAME') }}"
+  when: not osclientconfigfile.stat.exists
+  tags:
+    - always
+
+- name: Get token with os-client config
+  include: token.yml
+  vars:
+    os_client_config: "{{ lookup('file', osclientconfigfile.stat.path)|from_yaml }}"
+    USERNAME: "{{ os_client_config['clouds'][CLOUD]['auth']['username'] }}"
+    PASSWORD: "{{ os_client_config['clouds'][CLOUD]['auth']['password'] }}"
+    PROJECT_NAME: "{{ os_client_config['clouds'][CLOUD]['auth']['project_name'] }}"
+    DOMAIN: "{{ os_client_config['clouds'][CLOUD]['auth']['user_domain_name'] }}"
+  when: osclientconfigfile.stat.exists
+  tags:
+    - always

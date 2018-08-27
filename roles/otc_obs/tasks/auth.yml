@@ -1,0 +1,9 @@
+- name: Load auth variable file from ansible-vault secret
+  include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+        - "vars/_secrets.yml"
+        - "vars/secrets.yml"
+      skip: true
+  tags:
+    - always

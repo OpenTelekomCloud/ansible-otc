@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  gather_facts: no
+  roles:
+  - role: ../roles/otc_auth
+  - role: ../roles/ecs
+  - role: ../roles/images
+  - role: ../roles/flavors

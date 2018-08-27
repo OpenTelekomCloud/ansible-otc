@@ -1,0 +1,70 @@
+- name: Send request to API (list ECS for lookup)
+  uri:
+    url: "{{ AUTH_URL_ECS }}/servers"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: ecs_result
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: ecs_result.status == 200
+  changed_when: false
+  when: ecs_name is defined
+
+- name: Set fact ecs_id for ecs if ecs_name is defined
+  set_fact:
+    ecs_id: "{{ (ecs_result.content|from_json)|json_query(\"servers[?name=='\" + ecs_name + \"'].id|[0]\") }}"
+  when: ecs_name is defined
+
+- name: Lookup elb_id
+  include: lookup.yml
+
+- name: Send request to API (show ELB backend members)
+  uri:
+    url: "{{ AUTH_URL_ELB }}/{{ PROJECT_ID }}/elbaas/listeners/{{ listener_id}}/members"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: backendmembers
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: backendmembers.status == 200
+  changed_when: false
+  when: listener_id is defined
+
+- name: Set fact backend_member_id
+  set_fact:
+    backend_member_id: "{{ (backendmembers.content|from_json)|json_query(\"[?server_id=='\" + ecs_id + \"'].id|[0]\") }}"
+  when: ecs_id is defined
+
+- name: Send request to API (delete ELB backend member)
+  uri:
+    url: "{{ AUTH_URL_ELB }}/{{ PROJECT_ID }}/elbaas/listeners/{{ listener_id }}/members/action"
+    method: POST
+    body_format: raw
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+    body: "{{ lookup('template', 'backenddelete.json.j2')|to_json }}"
+  register: elbbackends
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: elbbackends.status == 200
+  changed_when: false
+  when:
+    - listener_id is defined
+    - (backend_member_id is defined and backend_member_id|length != 0)
+
+- debug:
+    msg: "{{ elbbackends }}"

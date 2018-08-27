@@ -1,0 +1,25 @@
+- name: Lookup OBS credentials
+  include: auth.yml
+
+- name: create timestamp
+  shell: LC_ALL=en TZ=GMT date +"%a, %d %b %Y %T %z"
+  register: sigdate
+
+- name: create signature
+  vars:
+    EC2_URL: "https://obs.otc.t-systems.com"
+    EC2_ACCESS_KEY: "{{ lookup('env','EC2_ACCESS_KEY') }}"
+    EC2_SECRET_KEY: "{{ lookup('env','EC2_SECRET_KEY') }}"
+  shell: bash -c 'echo -en "DELETE\n\n\n\nx-amz-date:{{ sigdate.stdout }}\n/{{ bucket }}" | openssl sha1 -hmac {{ EC2_SECRET_KEY }} -binary | base64'
+  register: signature
+
+- name: curl request delete data
+  vars:
+    EC2_URL: "https://obs.otc.t-systems.com"
+    EC2_ACCESS_KEY: "{{ lookup('env','EC2_ACCESS_KEY') }}"
+    EC2_SECRET_KEY: "{{ lookup('env','EC2_SECRET_KEY') }}"
+  command: 'curl -X DELETE -H "Authorization: AWS {{ EC2_ACCESS_KEY }}:{{ signature.stdout }}" -H "x-amz-date: {{ sigdate.stdout }}" {{ EC2_URL }}/{{ bucket }}'
+  register: curlresponse
+
+- debug:
+    msg: "{{ curlresponse.stdout_lines }}"

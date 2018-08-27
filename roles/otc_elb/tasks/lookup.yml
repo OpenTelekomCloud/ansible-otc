@@ -1,0 +1,135 @@
+- name: Send request to API (list elb)
+  uri:
+    url: "{{ AUTH_URL_ELB }}/{{ PROJECT_ID }}/elbaas/loadbalancers"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: elb_result
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: elb_result.status == 200
+  changed_when: false
+  when: elb_name is defined
+
+- name: Set fact elb_id for elb if elb_name is defined
+  set_fact:
+    elb_id: "{{ (elb_result.content|from_json)|json_query(\"loadbalancers[?name=='\" + elb_name + \"'].id|[0]\") }}"
+  when: elb_name is defined
+
+- name: Send request to API (list VPC for lookup elb_vpc_name)
+  uri:
+    url: "{{ AUTH_URL_VPC }}/v1/{{ PROJECT_ID }}/vpcs"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: elb_vpc_result
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: elb_vpc_result.status == 200
+  changed_when: false
+
+- name: Set fact vpc_id if vpc_name is defined
+  set_fact:
+    vpc_id: "{{ (elb_vpc_result.content|from_json)|json_query(\"vpcs[?name=='\" + elb_vpc_name + \"'].id|[0]\") }}"
+  when:
+    - elb_vpc_name is defined
+
+- name: Send request to API (list subnet for lookup elb_subnet_name)
+  uri:
+    url: "{{ AUTH_URL_VPC }}/v1/{{ PROJECT_ID }}/subnets"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: elb_subnet_result
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: elb_subnet_result.status == 200
+  changed_when: false
+  when:
+    - elb_subnet_name is defined
+
+- name: Set fact for subnet_id if elb_subnet_name is defined
+  set_fact:
+    subnet_id: "{{ (elb_subnet_result.content|from_json)|json_query(\"subnets[?name=='\" + elb_subnet_name + \"'].id|[0]\") }}"
+  when:
+    - elb_subnet_name is defined and elb_subnet_name|length != 0
+
+- name: Send Request to API (list elb certificates)
+  uri:
+    url: "{{ AUTH_URL_ELB }}/{{ PROJECT_ID }}/elbaas/certificate"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: listener_certificate_result
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: listener_certificate_result.status == 200
+  changed_when: false
+
+- name: Set fact listener_certificate_id for elb if listener_certificate_name is defined
+  set_fact:
+    listener_certificate_id: "{{ (listener_certificate_result.content|from_json)|json_query(\"certificates[?name=='\" + listener_certificate_name + \"'].id|[0]\") }}"
+  when:
+    - listener_name is defined
+
+- name: Send Request to API (list elb listener)
+  uri:
+    url: "{{ AUTH_URL_ELB }}/{{ PROJECT_ID }}/elbaas/listeners?loadbalancer_id={{ elb_id}}"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: listener_result
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: listener_result.status == 200
+  changed_when: false
+  when: elb_id is defined
+
+- name: Set fact listener_id for elb if listener_name is defined
+  set_fact:
+    listener_id: "{{ (listener_result.content|from_json)|json_query(\"[?name=='\" + listener_name + \"'].id|[0]\") }}"
+  when: listener_name is defined
+
+- name: Send Request to API (show elb listener details)
+  uri:
+    url: "{{ AUTH_URL_ELB }}/{{ PROJECT_ID }}/elbaas/listeners/{{ listener_id}}"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: listenerdetail_result
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: listenerdetail_result.status == 200
+  changed_when: false
+  when: listener_id is defined and listener_id|length != 0
+
+- name: Set fact healthcheck_id for elb listener
+  set_fact:
+    healthcheck_id: "{{ (listenerdetail_result.content|from_json)|json_query('healthcheck_id') }}"
+  when:
+    - listenerdetail_result is defined
+    - listener_id is defined and listener_id|length != 0

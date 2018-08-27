@@ -1,0 +1,20 @@
+- name: Request job status from  API
+  uri:
+    url: "{{ AUTH_URL_ECS_CLOUD }}/{{ PROJECT_ID }}/jobs/{{ job_id }}"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: jobstatus
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: jobstatus.status == 200
+  changed_when: false
+  when: job_id is defined
+
+- debug:
+    msg: "{{ jobstatus.json }}"
+  when: jobstatus is defined and jobstatus.content|length != 0

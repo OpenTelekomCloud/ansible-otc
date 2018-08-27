@@ -1,0 +1,41 @@
+- name: Lookup rds_flavor_id
+  include: flavor.yml
+
+- name: Lookup vpc_id + subnet_id
+  vars:
+    vpc_name: "{{ rds_vpc_name }}"
+    subnet_name: "{{ rds_subnet_name }}"
+  include: ../../otc_subnet/tasks/lookup.yml
+
+- name: Lookup secgroup_id
+  vars:
+    secgroup_name: "{{ rds_secgroup_name }}"
+  include: ../../otc_secgroup/tasks/lookup.yml
+
+- name: Send request to API (create RDS)
+  uri:
+    url: "{{ AUTH_URL_RDS }}/{{ OS_USER_DOMAIN_ID }}/instances"
+    method: POST
+    body_format: raw
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    status_code: 200,201,202,203
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+      X-Language: "en-us"
+    body: "{{ lookup('template', 'create.json.j2')|to_json }}"
+  register: rds
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: rds.status == 200 or rds.status == 201 or rds.status == 202 or rds.status == 203
+  changed_when: false
+  when:
+    - rds_name is defined
+    - rds_flavor_id is defined
+    - not rds_id or rds_id is undefined
+
+- name: Output of  rds
+  debug:
+    msg: "{{ rds }}"

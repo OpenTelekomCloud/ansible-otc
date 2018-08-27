@@ -1,0 +1,3 @@
+- name: action {{ localaction }}
+  include: "{{ localaction }}.yml"
+  when: localaction is defined

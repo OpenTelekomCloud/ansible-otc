@@ -1,0 +1,16 @@
+#!/bin/sh
+# script to generate ansible playbook
+
+cat > roles.yml << EOF
+---
+- hosts: localhost
+  gather_facts: no
+
+  roles:
+    - role: "otc_auth"
+EOF
+
+for var in "$@"
+do
+    echo "    - role: \"$var\"" >> roles.yml
+done

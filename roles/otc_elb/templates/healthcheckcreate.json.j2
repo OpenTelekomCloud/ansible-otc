@@ -1,0 +1,21 @@
+{
+    "listener_id": "{{ listener_id }}",
+{% if healthcheck_connect_port is defined and healthcheck_connect_port|length != 0 %}  
+    "healthcheck_connect_port": {{ healthcheck_connect_port }},
+{% endif %}  
+{% if healthcheck_interval is defined and healthcheck_interval|length != 0 %}  
+    "healthcheck_interval": {{ healthcheck_interval }},
+{% endif %}  
+{% if healthcheck_protocol is defined and healthcheck_protocol|length != 0 %}  
+    "healthcheck_protocol": "{{ healthcheck_protocol }}",
+{% endif %}  
+{% if healthcheck_timeout is defined and healthcheck_timeout|length != 0 %}  
+    "healthcheck_timeout": {{ healthcheck_timeout }},
+{% endif %}  
+{% if healthcheck_uri is defined and healthcheck_uri|length != 0 %}  
+    "healthcheck_uri": "{{ healthcheck_uri }}",
+{% endif %}  
+{% if healthcheck_treshold is defined and  healthcheck_treshold|length != 0 %}  
+    "healthcheck_treshold": {{ healthcheck_treshold }}
+{% endif %}  
+}

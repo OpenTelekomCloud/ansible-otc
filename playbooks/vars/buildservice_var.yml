@@ -1,0 +1,29 @@
+---
+ecs_name: "buildserver"
+# distro: "xenial"
+bucket: "buildservice99"
+availability_zone: "eu-de-01"
+vpc_name: "buildserver-vpc01"
+vpc_net: "192.168.0.0/16"
+subnet_name: "buildserver-subnet01"
+subnet_net: "192.168.0.0/24"
+subnet_gateway: "192.168.0.1"
+subnet_dhcp_enable: true
+subnet_primary_dns: 8.8.8.8
+subnet_secondary_dns: 8.4.4.8
+secgroups:
+  - "buildserver-secgroup01"
+securitygroups:
+  buildserver-secgroup01:
+    - "ingress;IPv4;tcp;22;22;0.0.0.0/0"
+    - "ingress;IPv4;icmp;;;0.0.0.0/0"
+    - "egress;IPv4;tcp;80;80;0.0.0.0/0"
+ecs_volumetype: "SSD"
+ecs_ram: "2048"
+ecs_vcpus: "2"
+ecs_adminkey: "buildserver-key"
+keypair_file: "~/.ssh/id_rsa.pub"
+ecs_ipaddress: "192.168.0.100"
+public_ip_address: "80.158.16.33"
+eip_bandwidth_name: "buildserver-eip01"
+eip_bandwidth_size: "500"

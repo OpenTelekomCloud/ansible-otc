@@ -1,0 +1,24 @@
+{
+    "name": "{{ listener_name }}",
+    "loadbalancer_id": "{{ elb_id }}",
+    "protocol": "{{ listener_protocol }}",
+    "port": {{ listener_port }},
+    "backend_protocol": "{{ listener_backend_protocol }}",
+    "backend_port": {{ listener_backend_port }},
+{% if listener_certificate_id is defined and listener_certificate_id|length != 0 %}  
+    "certificate_id": "{{ listener_certificate_id }}",
+{% endif %}  
+{% if listener_session_sticky is defined and listener_session_sticky|bool %}  
+    "session_sticky": "{{ listener_session_sticky }}",
+{% endif %}  
+{% if listener_sticky_session_type is defined and listener_sticky_session_type|length != 0 %}  
+    "sticky_session_type": "{{ listener_sticky_session_type }}",
+{% endif %}  
+{% if listener_cookie_timeout is defined and listener_cookie_timeout|length != 0 %}  
+    "cookie_timeout": {{ listener_cookie_timeout }},
+{% endif %}  
+{% if listener_tcp_timeout is defined and listener_tcp_timeout|length != 0 %}  
+    "tcp_timeout": {{ listener_tcp_timeout }},
+{% endif %}  
+    "lb_algorithm": "{{ listener_lb_algorithm }}"
+}

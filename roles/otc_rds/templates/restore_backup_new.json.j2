@@ -1,0 +1,14 @@
+{
+    "instance": {
+        "name": "{{ rds_name }}",
+        "flavorRef": "{{ rds_flavor_id }}",
+        "volume": {
+            "size": {{ rds_volume_size }}
+        },
+        "restorePoint":{
+           "backupRef": "{{ rds_backup_id }}",
+           "restoreTime": {{ lookup('pipe','date +%s --date=\"' + rds_restore_time + '\"') }},
+           "sourceInstanceId": "{{ rds_backup_instance_id }}"
+        }
+    }
+}

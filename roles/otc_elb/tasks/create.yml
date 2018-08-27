@@ -1,0 +1,30 @@
+- name: Get elb_id
+  include: lookup.yml
+  when:
+    - elb_name is defined
+
+- name: Send request to API (create ELB)
+  uri:
+    url: "{{ AUTH_URL_ELB }}/{{ PROJECT_ID }}/elbaas/loadbalancers"
+    method: POST
+    body_format: raw
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+    body: "{{ lookup('template', 'create.json.j2')|to_json }}"
+  register: elb
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: elb.status == 200
+  changed_when: false
+  when:
+    - listener_name is undefined
+    - vpc_id is defined
+    - elb_name is defined
+    - not elb_id or elb_id is undefined
+
+- debug:
+    msg: "{{ elb }}"

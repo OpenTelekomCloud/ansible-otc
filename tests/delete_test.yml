@@ -1,0 +1,60 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    # VPC,Subnet,Secgroup,ECS,EIP
+    tenant_json: "vars/tenant.json"
+    tenant_cf: "{{ lookup('file', tenant_json) | from_json }}"
+    image_name: "{{ tenant_cf['vms'][ecs_name]['image_name'] | default(tenant_cf['default']['image_name']) }}"
+    availability_zone: "{{ tenant_cf['vms'][ecs_name]['availability_zone'] | default(tenant_cf['default']['availability_zone']) }}"
+    vpc_name: "{{ tenant_cf['vms'][ecs_name]['vpc_name'] | default(tenant_cf['default']['vpc_name']) }}"
+    vpc_net: "{{ tenant_cf['vms'][ecs_name]['vpc_net'] | default(tenant_cf['default']['vpc_net']) }}"
+    subnet_name: "{{ tenant_cf['vms'][ecs_name]['subnet_name'] | default(tenant_cf['default']['subnet_name']) }}"
+    subnet_net: "{{ tenant_cf['vms'][ecs_name]['subnet_net'] | default(tenant_cf['default']['subnet_net']) }}"
+    subnet_gateway: "{{ tenant_cf['vms'][ecs_name]['subnet_gateway'] | default(tenant_cf['default']['subnet_gateway']) }}"
+    subnet_dhcp_enable: "{{ tenant_cf['vms'][ecs_name]['subnet_dhcp_enable'] | default(tenant_cf['default']['subnet_dhcp_enable']) }}"
+    subnet_primary_dns: "{{ tenant_cf['vms'][ecs_name]['subnet_primary_dns'] | default(tenant_cf['default']['subnet_primary_dns']) }}"
+    subnet_secondary_dns: "{{ tenant_cf['vms'][ecs_name]['subnet_secondary_dns'] | default(tenant_cf['default']['subnet_secondary_dns']) }}"
+    secgroups: "{{ tenant_cf['vms'][ecs_name]['secgroups'] | default(tenant_cf['default']['secgroups']) }}"
+    secgrouprules: "{{ tenant_cf['securitygroups'][secgroup_name] }}"
+    ecs_ipaddress: "{{ tenant_cf['vms'][ecs_name]['ecs_ipaddress'] | default(tenant_cf['default']['ecs_ipaddress']) }}"
+    public_ip_address: "{{ tenant_cf['vms'][ecs_name]['ecs_publicip'] }}"
+    ptr_name: "{{ tenant_cf['vms'][ecs_name]['ecs_publicfqdn'] }}"
+    eip_bandwidth_name: "{{ tenant_cf['vms'][ecs_name]['eip_bandwidth_name'] | default(tenant_cf['default']['eip_bandwidth_name']) }}"
+    eip_bandwidth_size: "{{ tenant_cf['vms'][ecs_name]['eip_bandwidth_size'] | default(tenant_cf['default']['eip_bandwidth_size']) }}"
+    ecs_volumetype: "{{ tenant_cf['vms'][ecs_name]['ecs_volumetype'] | default(tenant_cf['default']['ecs_volumetype']) }}"
+    ecs_ram: "{{ tenant_cf['vms'][ecs_name]['ecs_ram'] | default(tenant_cf['default']['ecs_ram']) }}"
+    ecs_vcpus: "{{ tenant_cf['vms'][ecs_name]['ecs_vcpus'] | default(tenant_cf['default']['ecs_vcpus']) }}"
+    ecs_adminkey: "{{ tenant_cf['vms'][ecs_name]['ecs_adminkey'] | default(tenant_cf['default']['ecs_adminkey']) }}"
+    keypair_file: "{{ tenant_cf['vms'][ecs_name]['keypair_file'] | default(tenant_cf['default']['keypair_file']) }}"
+    # EVS
+    evs_availability_zone: "{{ tenant_cf['volumes'][evs_name]['evs_availability_zone'] | default(tenant_cf['default']['evs_availability_zone']) }}"
+    evs_volume_type: "{{ tenant_cf['volumes'][evs_name]['evs_volume_type'] | default(tenant_cf['default']['evs_volume_type']) }}"
+    evs_size: "{{ tenant_cf['volumes'][evs_name]['evs_size'] | default(tenant_cf['default']['evs_size']) }}"
+    evs_multiattach: "{{ tenant_cf['volumes'][evs_name]['evs_multiattach'] | default(tenant_cf['default']['evs_multiattach']) }}"
+    evs_scsi: "{{ tenant_cf['volumes'][evs_name]['evs_scsi'] | default(tenant_cf['default']['evs_scsi']) }}"
+    # DNS
+    zone_description: "{{ tenant_cf['dnszones'][zone_name]['zone_description'] | default(tenant_cf['default']['zone_description']) }}"
+    zone_type: "{{ tenant_cf['dnszones'][zone_name]['zone_type'] | default(tenant_cf['default']['zone_type']) }}"
+    zone_email: "{{ tenant_cf['dnszones'][zone_name]['zone_email'] | default(tenant_cf['default']['zone_email']) }}"
+    zone_ttl: "{{ tenant_cf['dnszones'][zone_name]['zone_ttl'] | default(tenant_cf['default']['zone_ttl']) }}"
+    zone_records: "{{ tenant_cf['dnszonerecords'][zone_name] }}"
+    # playbook action
+    localaction: "delete"
+
+  roles:
+    # create VM
+    - role: "otc_auth"
+    - role: "otc_ecs"
+    - role: "otc_keypair"
+    - role: "otc_secgroup"
+    - role: "otc_subnet"
+    - role: "otc_vpc"
+    # create internal DNS zone
+    - role: "otc_dns"
+      localaction: "ptrlist"
+    - role: "otc_dns"
+      zone_name: "travis.otc.telekomcloud99.com"
+      localaction: "delete"
+    - role: "otc_dns"
+      localaction: "ptrdelete"

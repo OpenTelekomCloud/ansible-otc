@@ -1,0 +1,22 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    tenant_json: "vars/dns.json"
+    tenant_cf: "{{ lookup('file', tenant_json) | from_json }}"
+    # DNS
+    zone_description: "{{ tenant_cf['dnszones'][zone_name]['zone_description'] | default(tenant_cf['default']['zone_description']) }}"
+    zone_type: "{{ tenant_cf['dnszones'][zone_name]['zone_type'] | default(tenant_cf['default']['zone_type']) }}"
+    zone_email: "{{ tenant_cf['dnszones'][zone_name]['zone_email'] | default(tenant_cf['default']['zone_email']) }}"
+    zone_ttl: "{{ tenant_cf['dnszones'][zone_name]['zone_ttl'] | default(tenant_cf['default']['zone_ttl']) }}"
+    zone_records: "{{ tenant_cf['dnszonerecords'][zone_name] }}"
+
+  roles:
+    - role: "otc_auth"
+    - role: "otc_dns"
+      localaction: "create"
+    # create internal DNS zone
+    # - role: "otc_vpc"
+    #   localaction: "router"
+    # - role: "otc_dns"
+    #   localaction: "create"

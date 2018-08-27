@@ -1,0 +1,28 @@
+- name: Lookup rds_id
+  include: lookup.yml
+
+- name: Send request to API (create RDS backup)
+  uri:
+    url: "{{ AUTH_URL_RDS }}/{{ OS_USER_DOMAIN_ID }}/backups"
+    method: POST
+    body_format: raw
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    status_code: 200,201,202,203
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+      X-Language: "en-us"
+    body: "{{ lookup('template', 'create_backup.json.j2')|to_json }}"
+  register: rdsbackup
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: rdsbackup.status == 200 or rdsbackup.status == 201 or rdsbackup.status == 202 or rdsbackup.status == 203
+  changed_when: false
+  when:
+    - rds_backup_name is defined
+
+- name: Output of rdsbackup
+  debug:
+    msg: "{{ rdsbackup }}"

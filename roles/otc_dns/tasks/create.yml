@@ -1,0 +1,40 @@
+- name: Lookup zone_id
+  include: lookup.yml
+
+- name: Delete current zone
+  include: delete.yml
+  when: zone_id is defined
+
+- name: Send request to API (create zone)
+  uri:
+    url: "{{ AUTH_URL_DNS }}/v2/zones"
+    method: POST
+    body_format: raw
+    follow_redirects: all
+    return_content: yes
+    validate_certs: yes
+    status_code: 200,201,202,203
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+    body: "{{ lookup('template', 'create.json.j2')|to_json }}"
+  register: zone
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: zone.status == 200 or zone.status == 201 or zone.status == 202 or zone.status == 203
+  changed_when: false
+  when: zone_name is defined
+
+- name: Pause while creating zone
+  pause:
+    minutes: 1
+
+- name: Lookup zone_id
+  include: lookup.yml
+
+- name: Create zonerecords
+  include: zonerecord_create.yml
+#  with_items:
+#    - "{{ zone_records }}"
+#  loop_control:
+#    loop_var: zone_record

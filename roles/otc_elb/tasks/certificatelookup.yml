@@ -1,0 +1,21 @@
+- name: Request elb certificate list from API
+  uri:
+    url: "{{ AUTH_URL_ELB }}/{{ PROJECT_ID }}/elbaas/certificate"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: elb_certificate_result
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: elb_certificate_result.status == 200
+  changed_when: false
+  when: elb_certificate_name is defined and elb_certificate_name|length != 0
+
+- name: Set fact elb_certificate_id for elb if elb_certificate_name is defined
+  set_fact:
+    elb_certificate_id: "{{ (elb_certificate_result.content|from_json)|json_query(\"certificates[?name=='\" + elb_certificate_name + \"'].id|[0]\") }}"
+  when: elb_certificate_name is defined and elb_certificate_name|length != 0

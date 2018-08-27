@@ -1,0 +1,21 @@
+- name: Send request to API (delete keypair)
+  uri:
+    url: "{{ AUTH_URL_ECS }}/os-keypairs/{{ ecs_adminkey }}"
+    method: DELETE
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    status_code: 200,201,202,203,204
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: keypair
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: keypair.status == 200 or keypair.status == 201 or keypair.status == 202 or keypair.status == 203 or keypair.status == 204
+  changed_when: false
+  when: ecs_adminkey_name is defined and ecs_adminkey_name|length != 0
+#  ignore_errors: true
+
+- debug:
+    msg: "{{ keypair }}"

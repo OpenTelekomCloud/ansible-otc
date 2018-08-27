@@ -1,0 +1,29 @@
+- name: Lookup OBS credentials
+  include: auth.yml
+
+- name: create timestamp
+  shell: LC_ALL=en TZ=GMT date +"%a, %d %b %Y %T %z"
+  register: sigdate
+
+- name: create signature
+  vars:
+    EC2_URL: "https://obs.otc.t-systems.com"
+    EC2_ACCESS_KEY: "{{ lookup('env','EC2_ACCESS_KEY') }}"
+    EC2_SECRET_KEY: "{{ lookup('env','EC2_SECRET_KEY') }}"
+  shell: bash -c 'echo -en "GET\n\n\n\nx-amz-date:{{ sigdate.stdout }}\n/" | openssl sha1 -hmac {{ EC2_SECRET_KEY }} -binary | base64'
+  register: signature
+
+- name: curl request
+  vars:
+    EC2_URL: "https://obs.otc.t-systems.com"
+    EC2_ACCESS_KEY: "{{ lookup('env','EC2_ACCESS_KEY') }}"
+    EC2_SECRET_KEY: "{{ lookup('env','EC2_SECRET_KEY') }}"
+  command: 'curl -H "Authorization: AWS {{ EC2_ACCESS_KEY }}:{{ signature.stdout }}" -H "x-amz-date: {{ sigdate.stdout }}" {{ EC2_URL }}'
+  register: curlresponse
+
+- name: xmllint output
+  shell: echo '{{ curlresponse.stdout }}' | xmllint --format -
+  register: xmlout
+
+- debug:
+    msg: "{{ xmlout.stdout_lines }}"

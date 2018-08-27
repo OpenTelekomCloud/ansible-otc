@@ -1,0 +1,36 @@
+---
+sudo: required
+dist: xenial
+
+language: python
+python:
+  - "2.7"
+  - "3.5"
+
+# Doc: https://docs.travis-ci.com/user/customizing-the-build#Build-Matrix
+# https://docs.travis-ci.com/user/common-build-problems/
+env:
+  - ANSIBLE_VERSION=latest
+  - ANSIBLE_VERSION=2.4.3.0
+  - ANSIBLE_VERSION=2.5.0
+  - ANSIBLE_VERSION=2.5.2
+
+branches:
+  only:
+    - master
+    - dev
+
+# before_install:
+#   - sudo apt-get update -qq
+
+install:
+  # Install Ansible.
+  - if [ "$ANSIBLE_VERSION" = "latest" ]; then pip install ansible; else pip install ansible==$ANSIBLE_VERSION; fi
+  - pip install ansible-lint jmespath
+
+script:
+  # Check the role/playbook's syntax.
+  - find roles/ -name "*.yml" | xargs ansible-lint
+
+  # Run the role/playbook with ansible-playbook.
+  - tests/tests.sh

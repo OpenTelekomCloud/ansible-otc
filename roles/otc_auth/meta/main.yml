@@ -1,0 +1,16 @@
+galaxy_info:
+  author: Frank Kloeker
+  description: Ansible Role for Open Telekom Cloud
+  company: Deutsche Telekom AG
+  license: Apache2
+  min_ansible_version: 2.4
+  platforms:
+    - name: Ubuntu
+      versions:
+        - xenial
+  categories:
+    - cloud
+    - python
+    - openstack
+#dependencies:
+#  - role: otc_auth

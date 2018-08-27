@@ -1,0 +1,39 @@
+- name: Lookup vpc_id
+  include: lookup.yml
+
+- name: Send request to API (list routers)
+  uri:
+    url: "{{ AUTH_URL_VPC }}/v2.0/routers/{{ vpc_id }}"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: routerlist
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: routerlist.status == 200
+  changed_when: false
+  when:
+    - vpc_id is defined
+
+- set_fact:
+    router_id: "{{ (routerlist.content|from_json)|json_query('router.id') }}"
+    router_name: "{{ (routerlist.content|from_json)|json_query('router.name') }}"
+    router_status: "{{ (routerlist.content|from_json)|json_query('router.status') }}"
+    router_admin_state_up: "{{ (routerlist.content|from_json)|json_query('router.admin_state_up') }}"
+    router_routes: "{{ (routerlist.content|from_json)|json_query('router.routes[]') }}"
+    router_tenant_id: "{{ (routerlist.content|from_json)|json_query('router.tenant_id') }}"
+    external_network_id: "{{ (routerlist.content|from_json)|json_query('router.external_gateway_info.network_id') }}"
+    external_network_snat_state: "{{ (routerlist.content|from_json)|json_query('router.external_gateway_info.enable_snat') }}"
+  when:
+    - vpc_id is defined
+    - routerlist is defined
+
+- debug:
+    msg: "{{ routerlist.json }}"
+  when:
+    - vpc_id is defined
+    - routerlist is defined

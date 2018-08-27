@@ -1,6 +1,0 @@
----
-- hosts: all
-  roles:
-  - role: s3_upload
-
-# http://support.hwclouds.com/en-us/api-obs/en-us_topic_0019159323.html

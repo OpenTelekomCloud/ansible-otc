@@ -1,6 +1,0 @@
----
-- hosts: all
-  roles:
-  - role: token
-  - role: elb_delete
-

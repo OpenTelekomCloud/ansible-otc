@@ -1,0 +1,21 @@
+- name: Lookup image_id
+  include: lookup.yml
+
+- name: Send request to API (delete image)
+  uri:
+    url: "{{ AUTH_URL_IMS }}/v2/images/{{ image_id }}"
+    method: DELETE
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: image_delete
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: image_delete.status == 200
+  changed_when: false
+
+- debug:
+    msg: "{{ image_delete }}"

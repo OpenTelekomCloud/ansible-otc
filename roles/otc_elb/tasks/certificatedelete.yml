@@ -1,0 +1,26 @@
+- name: Get elb_certificate_id
+  include: certificatelookup.yml
+
+- name: Send request to API (delete certificate)
+  uri:
+    url: "{{ AUTH_URL_ELB }}/{{ PROJECT_ID }}/elbaas/certificate/{{ elb_certificate_id }}"
+    method: DELETE
+    return_content: yes
+    status_code: 200,201,202,203,204
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+  register: elbcertifcate
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: elbcertificate.status == 200 or elbcertificate.status == 201 or elbcertificate.status == 203 or elbcertificate.status == 204
+  changed_when: false
+  when: elb_certificate_id is defined and elb_certificate_id|length != 0
+
+- debug:
+    msg: "{{ elbcertifcate }}"
+  when:
+    - elbcertifcate is defined
+    - elb_certificate_id is defined

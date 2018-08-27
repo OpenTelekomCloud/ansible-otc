@@ -1,0 +1,17 @@
+{
+    "security_group_rule": {
+        "direction": "{{ secgrouprule_part[0] }}",
+        "ethertype": "{{ secgrouprule_part[1] }}",
+        "protocol": "{{ secgrouprule_part[2] }}",
+{% if secgrouprule_part[3] is defined and secgrouprule_part[3]|length != 0 %}  
+        "port_range_min": {{ secgrouprule_part[3] }},
+{% endif %}  
+{% if secgrouprule_part[4] is defined and secgrouprule_part[4]|length != 0 %}  
+        "port_range_max": {{ secgrouprule_part[4] }},
+{% endif %}  
+{% if secgrouprule_part[5] is defined and secgrouprule_part[5]|length != 0 %}  
+        "remote_ip_prefix": "{{ secgrouprule_part[5] }}",
+{% endif %}  
+        "security_group_id": "{{ secgroup_id }}",
+   }
+}

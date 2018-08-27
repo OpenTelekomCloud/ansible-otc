@@ -1,0 +1,25 @@
+- name: Lookup rds_id
+  include: lookup.yml
+
+- name: Send request to API (show RDS)
+  uri:
+    url: "{{ AUTH_URL_RDS }}/{{ OS_USER_DOMAIN_ID }}/instances/{{ rds_id }}"
+    method: GET
+    return_content: yes
+    follow_redirects: "{{ uri_follow_redirects }}"
+    validate_certs: "{{ uri_validate_certs }}"
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ token['x_subject_token'] }}"
+      X-Language: "en-us"
+  register: rds
+  retries: "{{ uri_retries }}"
+  delay: "{{ uri_delay }}"
+  until: rds.status == 200
+  changed_when: false
+  when:
+    - rds_id is defined
+
+- name: Output of rds
+  debug:
+    msg: "{{ rds.json }}"
