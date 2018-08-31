@@ -1,9 +1,0 @@
-uri_follow_redirects: "none"
-uri_validate_certs: "yes"
-uri_retries: 5
-uri_delay: 1
-errorlog_startdate: "2018-05-01+00:00"
-errorlog_enddate: "2018-05-05+23:59"
-errorlog_curpage: 1
-errorlog_perpage: 100
-slowlog_type:

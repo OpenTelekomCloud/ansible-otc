@@ -3,10 +3,14 @@
 # process, which may cause wedges in the gate later.
 
 pbr>=2.0 # Apache-2.0
-sphinx>=1.6.2 # BSD
+sphinx>=1.7.6 # BSD
 ansible==2.5.0.0
 jmespath
+netaddr
 # Ara for Web reports
 ara
-# OpenStack CLI for Tests
-python-openstackclient==3.14.0
+# for tests
+yamllint
+ansible-lint
+# for docs
+otcdocstheme

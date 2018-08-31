@@ -19,6 +19,10 @@ Welcome to Ansible-OTC documentation!
    buildservice
    dns
    ara
+   galaxy
+.. toctree::
+   :maxdepth: 3
+
    roles
    changelog
    authors

@@ -1,8 +1,0 @@
-{
-    "security_group": {
-{% if vpc_id is defined %}  
-        "vpc_id": "{{ vpc_id }}",
-{% endif %}  
-        "name": "{{ secgroup_name }}"
-    }
-}

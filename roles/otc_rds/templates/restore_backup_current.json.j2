@@ -1,8 +1,0 @@
-{    
-"restore": {
-{% if rds_restore_time is defined and rds_restore_time|length != 0 %}  
-        "restoreTime": {{ lookup('pipe','date +%s --date=\"' + rds_restore_time + '\"') }},
-{% endif %}  
-        "backupRef":"{{ rds_backup_id }}"
-    }
-}

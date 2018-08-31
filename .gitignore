@@ -1,6 +1,7 @@
 _secrets.yml
 _user_data*.txt
 tenant.ini.*
+roles/
 *.retry
 .eggs/
 .tox/

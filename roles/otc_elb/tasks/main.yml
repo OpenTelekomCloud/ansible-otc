@@ -1,8 +1,0 @@
-- name: Lookup elb_id
-  include: lookup.yml
-  when:
-    - elb_name is defined
-
-- name: action {{ localaction }}
-  include: "{{ localaction }}.yml"
-  when: localaction is defined

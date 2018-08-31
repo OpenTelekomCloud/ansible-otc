@@ -33,7 +33,12 @@ For local build use:
 
 ```
     tox -edocs
-    pip install -r requirements.txt
+```
+
+Roles are excluded, to use sample playbooks use:
+
+```
+    ./install_roles.sh
 ```
 
 
@@ -45,8 +50,6 @@ Presentations
 
 Contributing
 ------------
-Very welcome. We are in a very early state of automated platform deployment
-on OTC. So each help is still welcome
 
 1. Fork it.
 2. Create a branch (`git checkout -b my_markup`)

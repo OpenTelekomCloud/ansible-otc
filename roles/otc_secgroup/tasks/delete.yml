@@ -1,6 +1,0 @@
-- name: Loop over Secgroup List
-  vars:
-    secgroup_name: "{{ item }}"
-  include: deletegrouploop.yml
-  with_items:
-    - "{{ secgroups }}"

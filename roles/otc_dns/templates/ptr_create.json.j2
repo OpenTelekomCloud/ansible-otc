@@ -1,9 +1,0 @@
-{
-{% if description is defined and description|length != 0 %}  
-    "description": "{{ description }}",
-{% endif %}  
-{% if ttl is defined and ttl|length != 0 %}  
-    "ttl": {{ ttl }},
-{% endif %}  
-    "ptrdname": "{{ ptr_name }}."
-}
