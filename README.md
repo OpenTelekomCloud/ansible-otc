@@ -1,10 +1,12 @@
-Ansible for Open Telekom Cloud  [![GitHub release](https://img.shields.io/github/release/eumel8/ansible-otc.svg?maxAge=3600)](https://github.com/eumel8/ansible-otc/releases)
+Ansible for Open Telekom Cloud  [![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
 ==============================
 
 [![Documentation Status](https://readthedocs.org/projects/ansible-otc/badge/?version=latest)](http://ansible-otc.readthedocs.io/en/latest/?badge=latest)
 [![Build Status](https://travis-ci.org/eumel8/ansible-otc.svg?branch=master)](https://travis-ci.org/eumel8/ansible-otc)
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/25eee063b94b455b90e3aa9d915071fa)](https://www.codacy.com/app/eumel/ansible-otc?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=eumel8/ansible-otc&amp;utm_campaign=Badge_Grade)
+
+**Note: this project shows possibility to write custom modules/roles to access OTC from Ansible. It is however not recommended to be used in production. Please use official ansible openstack modules instead. Obsolete.**
 
 Intro
 =====
